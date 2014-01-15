@@ -4,6 +4,8 @@
 * A description of what your module does.
 */
 
+include_once("Ecomonic.inc");
+
 /**
  * Implements menu_hook().
  * @return array
@@ -70,8 +72,161 @@ function economic_admin_settings_form($node, &$form_state){
     return system_settings_form($form);
 }
 
+/**
+ * Implements hook_cron()
+ */
+function economic_cron(){
+    try{
+        $agreementnumber = variable_get("economic_agreementnumber");
+        $username = variable_get("economic_username");
+        $password = variable_get("economic_password");
+
+        if($agreementnumber == "" || $username == "" || $password == ""){
+            drupal_set_message(t("Specify e-conomic connection data"), "warning");
+        }
+        else{
+            $economic = new Ecomonic($agreementnumber, $username, $password);
+            $economic->connect();
+            //fetch all ecommerse users
+            $debtorHandle = $economic->debtor_GetAll();
+
+            $tmp = user_load(101);
+            debug($tmp);
+
+            foreach ($debtorHandle as $d) {
+                //check ids in drupal
+                //if does not exist
+                if(user_load($d->Number) == false){
+                    //add to drupal
+                    $economic_user = $economic->debtor_GetData($d);
+                    //debug($economic_user);
+                    $newuser = array(
+                        'uid' => $economic_user->Number,
+                        'name' => $economic_user->Name,
+                        'pass' => generate_random_string(),
+                        'mail' => $economic_user->Email,
+                        'status' => 1,
+                        'data' => array(
+                            'address' => $economic_user->Address,
+                            'postalcode' => $economic_user->PostalCode,
+                            'city' => $economic_user->City,
+                            'country' => $economic_user->Country,
+                            'balance' => $economic_user->Balance
+                        )
+                    );
+
+                    user_save(null, $newuser);
+                }
+            }
+        //if exists check for data update
+        }
+    }
+    catch(Exception $e){
+        drupal_set_message($e->getMessage(), "error");
+    }
+}
+
+function generate_random_string($name_length = 8) {
+    $alpha_numeric = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    return substr(str_shuffle($alpha_numeric), 0, $name_length);
+}
+
 function economic_user_update(&$edit, $account, $category){
     //update coresponding account in economic or create new
     //debug($edit);
     //debug($account);
+}
+
+function economic_user_insert(&$edit, $account, $category){
+    //if does not exist in economic create user in economic
+
+//<td><b>Number</b></td>
+//<td><b>Name</b></td>
+//<td><b>Email</b></td>
+//<td><b>Address</b></td>
+//<td><b>PostalCode</b></td>
+//<td><b>City</b></td>
+//<td><b>Country</b></td>
+//<td><b>Balance</b></td>
+
+//
+//    <data>
+
+//        <Handle>
+//          <Number>string</Number>
+//        </Handle>
+
+//        <Number>string</Number>
+
+//        <DebtorGroupHandle>
+//          <Number>int</Number>
+//        </DebtorGroupHandle>
+
+//        <Name>string</Name>
+
+//        <VatZone>HomeCountry or EU or Abroad</VatZone>
+
+//        <ExtendedVatZone>
+//          <Number>string</Number>
+//        </ExtendedVatZone>
+
+//        <CurrencyHandle>
+//          <Code>string</Code>
+//        </CurrencyHandle>
+
+//        <PriceGroupHandle>
+//          <Number>int</Number>
+//        </PriceGroupHandle>
+
+//        <IsAccessible>boolean</IsAccessible>
+
+//        <Ean>string</Ean>
+
+//        <PublicEntryNumber>string</PublicEntryNumber>
+
+//        <Email>string</Email>
+
+//        <TelephoneAndFaxNumber>string</TelephoneAndFaxNumber>
+
+//        <Website>string</Website>
+
+//        <Address>string</Address>
+
+//        <PostalCode>string</PostalCode>
+
+//        <City>string</City>
+
+//        <Country>string</Country>
+
+//        <CreditMaximum>decimal</CreditMaximum>
+
+//        <VatNumber>string</VatNumber>
+
+//        <County>string</County>
+
+//        <CINumber>string</CINumber>
+
+//        <TermOfPaymentHandle>
+//          <Id>int</Id>
+//        </TermOfPaymentHandle>
+
+//        <LayoutHandle>
+//          <Id>int</Id>
+//        </LayoutHandle>
+
+//        <AttentionHandle>
+//          <Id>int</Id>
+//        </AttentionHandle>
+
+//        <YourReferenceHandle>
+//          <Id>int</Id>
+//        </YourReferenceHandle>
+
+//        <OurReferenceHandle>
+//          <Number>int</Number>
+//        </OurReferenceHandle>
+
+//        <Balance>decimal</Balance>
+
+//      </data>
 }
