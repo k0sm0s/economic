@@ -90,6 +90,20 @@ class Ecomonic
     }
 
     /**
+     * Finds debtor by number and returns its handle.
+     * @param $number
+     * @return stdClass
+     * @throws Exception
+     */
+    public function debtor_FindByNumber($number){
+        if($this->client != null){
+            $debtorHandle = $this->client->Debtor_FindByNumber(array('number' =>$number))->Debtor_FindByNumberResult;
+            return $debtorHandle;
+        }else
+            throw new Exception("Not Connected.");
+    }
+
+    /**
      * Creates a new debtor from a data object.
      * The data object that specifies the properties of the new debtor
      * @param $data
@@ -101,13 +115,13 @@ class Ecomonic
             $debtorGroupHandles = $this->debtorGroup_GetAll();
             $firstDebtorGroup = $debtorGroupHandles[0];
             $newDebtorHandle = $this->client->Debtor_Create(array(
-                    'number'            => $_POST['debtor_number'],
+                    'number'            => $data['uid'],
                     'debtorGroupHandle' => $firstDebtorGroup,
-                    'name'              => $_POST['debtor_name'],
+                    'name'              => $data['name'],
                     'vatZone'           => 'EU'))->Debtor_CreateResult;
-            $this->client->Debtor_SetAddress(array(
+            $this->client->Debtor_SetEmail(array(
                     'debtorHandle' => $newDebtorHandle,
-                    'value'        => $_POST['debtor_address']
+                    'value'        => $data['mail']
                 )
             );
         }
@@ -115,6 +129,42 @@ class Ecomonic
         {
             throw $exception;
         }
+    }
+
+    /**
+     * Sets the name of a debtor.
+     * @param $debtorhandle
+     * @param $value
+     *
+     * @throws Exception
+     */
+    public function debtor_SetName($debtorhandle, $value){
+        if($this->client != null){
+            $this->client->Debtor_SetName(array(
+                    'debtorHandle' => $debtorhandle,
+                    'value'        => $value
+                )
+            );
+        }else
+            throw new Exception("Not Connected.");
+    }
+
+    /**
+     * Set the email of a debtor.
+     * @param $debtorhandle
+     * @param $value
+     *
+     * @throws Exception
+     */
+    public function debtor_SetEmail($debtorhandle, $value){
+        if($this->client != null){
+            $this->client->Debtor_SetEmail(array(
+                    'debtorHandle' => $debtorhandle,
+                    'value'        => $value
+                )
+            );
+        }else
+            throw new Exception("Not Connected.");
     }
 
     public function getAgreementNumber(){return $this->agreementNumber;}

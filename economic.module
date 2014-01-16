@@ -87,38 +87,26 @@ function economic_cron(){
         else{
             $economic = new Ecomonic($agreementnumber, $username, $password);
             $economic->connect();
-            //fetch all ecommerse users
+            //fetch all economic users
             $debtorHandle = $economic->debtor_GetAll();
 
-            $tmp = user_load(101);
-            debug($tmp);
-
             foreach ($debtorHandle as $d) {
+                $user = user_load($d->Number);
+                $economic_user = $economic->debtor_GetData($d);
+                $newuserdata = create_user_data($economic_user);
                 //check ids in drupal
                 //if does not exist
-                if(user_load($d->Number) == false){
+                if($user == false){
                     //add to drupal
-                    $economic_user = $economic->debtor_GetData($d);
-                    //debug($economic_user);
-                    $newuser = array(
-                        'uid' => $economic_user->Number,
-                        'name' => $economic_user->Name,
-                        'pass' => generate_random_string(),
-                        'mail' => $economic_user->Email,
-                        'status' => 1,
-                        'data' => array(
-                            'address' => $economic_user->Address,
-                            'postalcode' => $economic_user->PostalCode,
-                            'city' => $economic_user->City,
-                            'country' => $economic_user->Country,
-                            'balance' => $economic_user->Balance
-                        )
-                    );
-
-                    user_save(null, $newuser);
+                    user_save(null, $newuserdata);
+                }else{
+                    //if exists update data
+                    //check if needs update
+                    if(compare_user_data($user, $economic_user) == false)
+                        user_save($user, $newuserdata);
                 }
             }
-        //if exists check for data update
+            $economic->disconnect();
         }
     }
     catch(Exception $e){
@@ -126,107 +114,134 @@ function economic_cron(){
     }
 }
 
+/**
+ * Compare drupal user and economic user for changes
+ * @param $user
+ * @param $economic_user
+ *
+ * @return bool
+ * true if objects same. false if something changed
+ */
+function compare_user_data($user, $economic_user){
+    if($user->uid               != $economic_user->Number)      return false;
+    if($user->name              != $economic_user->Name)        return false;
+    if($user->mail              != $economic_user->Email)       return false;
+    if($user->data['address']   != $economic_user->Address)     return false;
+    if($user->data['postalcode']!= $economic_user->PostalCode)  return false;
+    if($user->data['city']      != $economic_user->City)        return false;
+    if($user->data['country']   != $economic_user->Country)     return false;
+    if($user->data['balance']   != $economic_user->Balance)      return false;
+    return true;
+}
+
+/**
+ * Creates user data array with values from economic user
+ * @param $economic_user
+ * @return array
+ */
+function create_user_data($economic_user){
+    $newuser = array(
+        'uid' => $economic_user->Number,
+        'name' => $economic_user->Name,
+        'pass' => generate_random_string(),
+        'mail' => $economic_user->Email,
+        'status' => 1,
+        'data' => array(
+            'address' => $economic_user->Address,
+            'postalcode' => $economic_user->PostalCode,
+            'city' => $economic_user->City,
+            'country' => $economic_user->Country,
+            'balance' => $economic_user->Balance
+        )
+    );
+    return $newuser;
+}
+
+/**
+ * Generates random character string
+ * @param int $name_length
+ * @return string
+ */
 function generate_random_string($name_length = 8) {
     $alpha_numeric = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     return substr(str_shuffle($alpha_numeric), 0, $name_length);
 }
 
+/**
+ * Implements hook_user_update().
+ * @param $edit
+ * @param $account
+ * @param $category
+ */
 function economic_user_update(&$edit, $account, $category){
-    //update coresponding account in economic or create new
-    //debug($edit);
-    //debug($account);
+    try{
+        $agreementnumber = variable_get("economic_agreementnumber");
+        $username = variable_get("economic_username");
+        $password = variable_get("economic_password");
+
+        if($agreementnumber != "" && $username != "" && $password != ""){
+            $economic = new Ecomonic($agreementnumber, $username, $password);
+            $economic->connect();
+            $userhandle = $economic->debtor_FindByNumber($account->uid);
+            if(count(get_object_vars($userhandle)) == 0)
+            {
+                //user does not exist in economic add him
+                $newuser = array(
+                    'uid' => $account->uid,
+                    'name' => $edit['name'],
+                    'mail' => $edit['mail']
+                );
+                $economic->debtor_CreateFromData($newuser);
+            }
+            else{
+                //get user
+                $economic_user = $economic->debtor_GetData($userhandle);
+                //check for data change
+                $edit['uid'] = $account->uid;
+                if(compare_user_data((object)$edit, $economic_user) == false){
+                    //save to economic
+                    $economic->debtor_SetName($userhandle, $edit['name']);
+                    $economic->debtor_SetEmail($userhandle, $edit['mail']);
+                }
+            }
+            $economic->disconnect();
+        }
+    }
+    catch(Exception $e){
+        //debug($e->getMessage(), 'error');
+    }
 }
 
+/**
+ * Implements hook_user_insert().
+ * @param $edit
+ * @param $account
+ * @param $category
+ */
 function economic_user_insert(&$edit, $account, $category){
-    //if does not exist in economic create user in economic
+    try{
+        $agreementnumber = variable_get("economic_agreementnumber");
+        $username = variable_get("economic_username");
+        $password = variable_get("economic_password");
 
-//<td><b>Number</b></td>
-//<td><b>Name</b></td>
-//<td><b>Email</b></td>
-//<td><b>Address</b></td>
-//<td><b>PostalCode</b></td>
-//<td><b>City</b></td>
-//<td><b>Country</b></td>
-//<td><b>Balance</b></td>
-
-//
-//    <data>
-
-//        <Handle>
-//          <Number>string</Number>
-//        </Handle>
-
-//        <Number>string</Number>
-
-//        <DebtorGroupHandle>
-//          <Number>int</Number>
-//        </DebtorGroupHandle>
-
-//        <Name>string</Name>
-
-//        <VatZone>HomeCountry or EU or Abroad</VatZone>
-
-//        <ExtendedVatZone>
-//          <Number>string</Number>
-//        </ExtendedVatZone>
-
-//        <CurrencyHandle>
-//          <Code>string</Code>
-//        </CurrencyHandle>
-
-//        <PriceGroupHandle>
-//          <Number>int</Number>
-//        </PriceGroupHandle>
-
-//        <IsAccessible>boolean</IsAccessible>
-
-//        <Ean>string</Ean>
-
-//        <PublicEntryNumber>string</PublicEntryNumber>
-
-//        <Email>string</Email>
-
-//        <TelephoneAndFaxNumber>string</TelephoneAndFaxNumber>
-
-//        <Website>string</Website>
-
-//        <Address>string</Address>
-
-//        <PostalCode>string</PostalCode>
-
-//        <City>string</City>
-
-//        <Country>string</Country>
-
-//        <CreditMaximum>decimal</CreditMaximum>
-
-//        <VatNumber>string</VatNumber>
-
-//        <County>string</County>
-
-//        <CINumber>string</CINumber>
-
-//        <TermOfPaymentHandle>
-//          <Id>int</Id>
-//        </TermOfPaymentHandle>
-
-//        <LayoutHandle>
-//          <Id>int</Id>
-//        </LayoutHandle>
-
-//        <AttentionHandle>
-//          <Id>int</Id>
-//        </AttentionHandle>
-
-//        <YourReferenceHandle>
-//          <Id>int</Id>
-//        </YourReferenceHandle>
-
-//        <OurReferenceHandle>
-//          <Number>int</Number>
-//        </OurReferenceHandle>
-
-//        <Balance>decimal</Balance>
-
-//      </data>
+        if($agreementnumber != "" && $username != "" && $password != ""){
+            $economic = new Ecomonic($agreementnumber, $username, $password);
+            $economic->connect();
+            $userhandle = $economic->debtor_FindByNumber($account->uid);
+            if(count(get_object_vars($userhandle)) == 0)
+            {
+                //user does not exist in economic add him
+                $newuser = array(
+                    'uid' => $account->uid,
+                    'name' => $edit['name'],
+                    'mail' => $edit['mail']
+                );
+                $economic->debtor_CreateFromData($newuser);
+            }
+            $economic->disconnect();
+        }
+    }
+    catch(Exception $e){
+        //debug($e->getMessage(), 'error');
+    }
 }
