@@ -1,5 +1,5 @@
 name = Economic
-description = A description of what your module does.
+description = Syncing data with e-conomics
 core = 7.x
 version = 7.x
 configure = admin/config/economic/manage
