@@ -7,6 +7,48 @@
 include_once("Ecomonic.inc");
 
 /**
+ * Implementation of hook_enable().
+ */
+function economic_enable() {
+    _economic_create_field("economic_name", "Name", true);
+    _economic_create_field("economic_address", "Address");
+    _economic_create_field("economic_postalcode", "PostalCode");
+    _economic_create_field("economic_city", "City");
+    _economic_create_field("economic_country", "Country");
+    _economic_create_field("economic_balance", "Balance");
+}
+
+function _economic_create_field($fieldname, $label, $required = false){
+    // Check if our field is not already created.
+    if (!field_info_field($fieldname)) {
+        $field = array(
+            'field_name' => $fieldname,
+            'type' => "text",
+        );
+        field_create_field($field);
+
+        // Create the instance on the bundle.
+        $instance = array(
+            'field_name' => $fieldname,
+            'entity_type' => 'user',
+            'label' => $label,
+            'bundle' => 'user',
+            // If you don't set the "required" property then the field wont be required by default.
+            'required' => $required,
+//            'settings' => array(
+//                // Here you inform either or not you want this field showing up on the registration form.
+//                'user_register_form' => 1,
+//            ),
+            'widget' => array(
+                'type' => "textfield",
+                'weight' => '1',
+            ),
+        );
+        field_create_instance($instance);
+    }
+}
+
+/**
  * Implements menu_hook().
  * @return array
  */
@@ -126,17 +168,22 @@ function compare_user_data($user, $economic_user){
     if($user->uid               != $economic_user->Number)      return false;
     if($user->name              != $economic_user->Email)       return false;
     if($user->mail              != $economic_user->Email)       return false;
-    if($user->data['name']      != $economic_user->Name)        return false;
+    if(_economic_get_value($user->economic_name['und'][0]['value'])          != $economic_user->Name)        return false;
     if(isset($economic_user->Address))
-        if($user->data['address']   != $economic_user->Address)     return false;
+        if(_economic_get_value($user->economic_address['und'][0]['value'])   != $economic_user->Address)     return false;
     if(isset($economic_user->PostalCode))
-        if($user->data['postalcode']!= $economic_user->PostalCode)  return false;
+        if(_economic_get_value($user->economic_postalcode['und'][0]['value'])!= $economic_user->PostalCode)  return false;
     if(isset($economic_user->City))
-        if($user->data['city']      != $economic_user->City)        return false;
+        if(_economic_get_value($user->economic_city['und'][0]['value'])      != $economic_user->City)        return false;
     if(isset($economic_user->Country))
-        if($user->data['country']   != $economic_user->Country)     return false;
-    if($user->data['balance']   != $economic_user->Balance)     return false;
+        if(_economic_get_value($user->economic_country['und'][0]['value'])   != $economic_user->Country)     return false;
+    if(_economic_get_value($user->economic_balance['und'][0]['value'])       != $economic_user->Balance)     return false;
     return true;
+}
+
+function _economic_get_value($var){
+    if(isset($var)) return $var;
+    return null;
 }
 
 /**
@@ -151,14 +198,12 @@ function create_user_data($economic_user){
         'pass' => generate_random_string(),
         'mail' => $economic_user->Email,
         'status' => 1,
-        'data' => array(
-            'name' => $economic_user->Name,
-            'address' => @$economic_user->Address,
-            'postalcode' => @$economic_user->PostalCode,
-            'city' => @$economic_user->City,
-            'country' => @$economic_user->Country,
-            'balance' => $economic_user->Balance
-        )
+        'economic_name'         => array('und' => array(0 => array('value' => $economic_user->Name))),
+        'economic_address'      => array('und' => array(0 => array('value' => @$economic_user->Address))),
+        'economic_postalcode'   => array('und' => array(0 => array('value' => @$economic_user->PostalCode))),
+        'economic_city'         => array('und' => array(0 => array('value' => @$economic_user->City))),
+        'economic_country'      => array('und' => array(0 => array('value' => @$economic_user->Country))),
+        'economic_balance'      => array('und' => array(0 => array('value' => $economic_user->Balance)))
     );
     return $newuser;
 }
@@ -180,6 +225,9 @@ function generate_random_string($name_length = 8) {
  * @param $category
  */
 function economic_user_update(&$edit, $account, $category){
+    //debug($edit['economic_name']['und'][0]['value']);
+    //debug($edit);
+    //debug($account);
     try{
         $agreementnumber = variable_get("economic_agreementnumber");
         $username = variable_get("economic_username");
@@ -189,15 +237,20 @@ function economic_user_update(&$edit, $account, $category){
             $economic = new Ecomonic($agreementnumber, $username, $password);
             $economic->connect();
             $userhandle = $economic->debtor_FindByNumber($account->uid);
-            $name = $edit['data']['name'] == null?$edit['name']:$edit['data']['name'];
+            $name = $edit['economic_name']['und'][0]['value'] == null?$edit['name']:$edit['economic_name']['und'][0]['value'];
             if(count(get_object_vars($userhandle)) == 0)
             {
                 //user does not exist in economic add him
                 $newuser = array(
                     'uid' => $account->uid,
                     'name' => $name,
-                    'mail' => $edit['mail']
+                    'mail' => $edit['mail'],
                 );
+                if(isset($edit['economic_address']['und'][0]['value'])) $newuser['address'] = $edit['economic_address']['und'][0]['value'];
+                if(isset($edit['economic_postalcode']['und'][0]['value'])) $newuser['postalcode'] = $edit['economic_postalcode']['und'][0]['value'];
+                if(isset($edit['economic_city']['und'][0]['value'])) $newuser['city'] = $edit['economic_city']['und'][0]['value'];
+                if(isset($edit['economic_country']['und'][0]['value'])) $newuser['country'] = $edit['economic_country']['und'][0]['value'];
+
                 $economic->debtor_CreateFromData($newuser);
             }
             else{
@@ -209,13 +262,17 @@ function economic_user_update(&$edit, $account, $category){
                     //save to economic
                     $economic->debtor_SetName($userhandle, $name);
                     $economic->debtor_SetEmail($userhandle, $edit['mail']);
+                    if(isset($edit['economic_address']['und'][0]['value'])) $economic->debtor_SetAddress($userhandle, $edit['economic_address']['und'][0]['value']);
+                    if(isset($edit['economic_postalcode']['und'][0]['value'])) $economic->debtor_SetPostalCode($userhandle, $edit['economic_postalcode']['und'][0]['value']);
+                    if(isset($edit['economic_city']['und'][0]['value'])) $economic->debtor_SetCity($userhandle, $edit['economic_city']['und'][0]['value']);
+                    if(isset($edit['economic_country']['und'][0]['value'])) $economic->debtor_SetCountry($userhandle, $edit['economic_country']['und'][0]['value']);
                 }
             }
             $economic->disconnect();
         }
     }
     catch(Exception $e){
-        //debug($e->getMessage(), 'error');
+        debug($e->getMessage(), 'error');
     }
 }
 
@@ -235,7 +292,7 @@ function economic_user_insert(&$edit, $account, $category){
             $economic = new Ecomonic($agreementnumber, $username, $password);
             $economic->connect();
             $userhandle = $economic->debtor_FindByNumber($account->uid);
-            $name = $edit['data']['name'] == null?$edit['name']:$edit['data']['name'];
+            $name = $edit['economic_name']['und'][0]['value'] == null?$edit['name']:$edit['economic_name']['und'][0]['value'];
             if(count(get_object_vars($userhandle)) == 0)
             {
                 //user does not exist in economic add him
@@ -244,6 +301,12 @@ function economic_user_insert(&$edit, $account, $category){
                     'name' => $name,
                     'mail' => $edit['mail']
                 );
+
+                if(isset($edit['economic_address']['und'][0]['value'])) $newuser['address'] = $edit['economic_address']['und'][0]['value'];
+                if(isset($edit['economic_postalcode']['und'][0]['value'])) $newuser['postalcode'] = $edit['economic_postalcode']['und'][0]['value'];
+                if(isset($edit['economic_city']['und'][0]['value'])) $newuser['city'] = $edit['economic_city']['und'][0]['value'];
+                if(isset($edit['economic_country']['und'][0]['value'])) $newuser['country'] = $edit['economic_country']['und'][0]['value'];
+
                 $economic->debtor_CreateFromData($newuser);
             }
             $economic->disconnect();

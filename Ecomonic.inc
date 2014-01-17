@@ -124,6 +124,31 @@ class Ecomonic
                     'value'        => $data['mail']
                 )
             );
+
+            if(!empty($data['address']))
+                $this->client->Debtor_SetAddress(array(
+                        'debtorHandle' => $newDebtorHandle,
+                        'value'        => $data['address']
+                    )
+                );
+            if(!empty($data['postalcode']))
+                $this->client->Debtor_SetPostalCode(array(
+                        'debtorHandle' => $newDebtorHandle,
+                        'value'        => $data['postalcode']
+                    )
+                );
+            if(!empty($data['city']))
+                $this->client->Debtor_SetCity(array(
+                        'debtorHandle' => $newDebtorHandle,
+                        'value'        => $data['city']
+                    )
+                );
+            if(!empty($data['country']))
+                $this->client->Debtor_SetCountry(array(
+                        'debtorHandle' => $newDebtorHandle,
+                        'value'        => $data['country']
+                    )
+                );
         }
         catch(Exception $exception)
         {
@@ -159,6 +184,47 @@ class Ecomonic
     public function debtor_SetEmail($debtorhandle, $value){
         if($this->client != null){
             $this->client->Debtor_SetEmail(array(
+                    'debtorHandle' => $debtorhandle,
+                    'value'        => $value
+                )
+            );
+        }else
+            throw new Exception("Not Connected.");
+    }
+
+    public function debtor_SetAddress($debtorhandle, $value){
+        if($this->client != null){
+            $this->client->Debtor_SetAddress(array(
+                    'debtorHandle' => $debtorhandle,
+                    'value'        => $value
+                )
+            );
+        }else
+            throw new Exception("Not Connected.");
+    }
+    public function debtor_SetPostalCode($debtorhandle, $value){
+        if($this->client != null){
+            $this->client->Debtor_SetPostalCode(array(
+                    'debtorHandle' => $debtorhandle,
+                    'value'        => $value
+                )
+            );
+        }else
+            throw new Exception("Not Connected.");
+    }
+    public function debtor_SetCity($debtorhandle, $value){
+        if($this->client != null){
+            $this->client->Debtor_SetCity(array(
+                    'debtorHandle' => $debtorhandle,
+                    'value'        => $value
+                )
+            );
+        }else
+            throw new Exception("Not Connected.");
+    }
+    public function debtor_SetCountry($debtorhandle, $value){
+        if($this->client != null){
+            $this->client->Debtor_SetCountry(array(
                     'debtorHandle' => $debtorhandle,
                     'value'        => $value
                 )
