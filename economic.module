@@ -7,48 +7,6 @@
 include_once("Ecomonic.inc");
 
 /**
- * Implementation of hook_enable().
- */
-function economic_enable() {
-    _economic_create_field("economic_name", "Name", true);
-    _economic_create_field("economic_address", "Address");
-    _economic_create_field("economic_postalcode", "PostalCode");
-    _economic_create_field("economic_city", "City");
-    _economic_create_field("economic_country", "Country");
-    _economic_create_field("economic_balance", "Balance");
-}
-
-function _economic_create_field($fieldname, $label, $required = false){
-    // Check if our field is not already created.
-    if (!field_info_field($fieldname)) {
-        $field = array(
-            'field_name' => $fieldname,
-            'type' => "text",
-        );
-        field_create_field($field);
-
-        // Create the instance on the bundle.
-        $instance = array(
-            'field_name' => $fieldname,
-            'entity_type' => 'user',
-            'label' => $label,
-            'bundle' => 'user',
-            // If you don't set the "required" property then the field wont be required by default.
-            'required' => $required,
-//            'settings' => array(
-//                // Here you inform either or not you want this field showing up on the registration form.
-//                'user_register_form' => 1,
-//            ),
-            'widget' => array(
-                'type' => "textfield",
-                'weight' => '1',
-            ),
-        );
-        field_create_instance($instance);
-    }
-}
-
-/**
  * Implements menu_hook().
  * @return array
  */
@@ -135,7 +93,7 @@ function economic_cron(){
             foreach ($debtorHandle as $d) {
                 $user = user_load($d->Number);
                 $economic_user = $economic->debtor_GetData($d);
-                $newuserdata = create_user_data($economic_user);
+                $newuserdata = _economic_create_user_data($economic_user);
                 //check ids in drupal
                 //if does not exist
                 if($user == false){
@@ -144,7 +102,7 @@ function economic_cron(){
                 }else{
                     //if exists update data
                     //check if needs update
-                    if(compare_user_data($user, $economic_user) == false)
+                    if(_economic_compare_user_data($user, $economic_user) == false)
                         user_save($user, $newuserdata);
                 }
             }
@@ -164,11 +122,11 @@ function economic_cron(){
  * @return bool
  * true if objects same. false if something changed
  */
-function compare_user_data($user, $economic_user){
+function _economic_compare_user_data($user, $economic_user){
     if($user->uid               != $economic_user->Number)      return false;
     if($user->name              != $economic_user->Email)       return false;
     if($user->mail              != $economic_user->Email)       return false;
-    if(_economic_get_value($user->economic_name['und'][0]['value'])          != $economic_user->Name)        return false;
+    if(_economic_get_value(@$user->economic_name['und'][0]['value'])          != $economic_user->Name)        return false;
     if(isset($economic_user->Address))
         if(_economic_get_value($user->economic_address['und'][0]['value'])   != $economic_user->Address)     return false;
     if(isset($economic_user->PostalCode))
@@ -191,11 +149,11 @@ function _economic_get_value($var){
  * @param $economic_user
  * @return array
  */
-function create_user_data($economic_user){
+function _economic_create_user_data($economic_user){
     $newuser = array(
         'uid'  => $economic_user->Number,
         'name' => $economic_user->Email,
-        'pass' => generate_random_string(),
+        'pass' => _economic_generate_random_string(),
         'mail' => $economic_user->Email,
         'status' => 1,
         'economic_name'         => array('und' => array(0 => array('value' => $economic_user->Name))),
@@ -213,7 +171,7 @@ function create_user_data($economic_user){
  * @param int $name_length
  * @return string
  */
-function generate_random_string($name_length = 8) {
+function _economic_generate_random_string($name_length = 8) {
     $alpha_numeric = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     return substr(str_shuffle($alpha_numeric), 0, $name_length);
 }
@@ -258,7 +216,7 @@ function economic_user_update(&$edit, $account, $category){
                 $economic_user = $economic->debtor_GetData($userhandle);
                 //check for data change
                 $edit['uid'] = $account->uid;
-                if(compare_user_data((object)$edit, $economic_user) == false){
+                if(_economic_compare_user_data((object)$edit, $economic_user) == false){
                     //save to economic
                     $economic->debtor_SetName($userhandle, $name);
                     $economic->debtor_SetEmail($userhandle, $edit['mail']);
