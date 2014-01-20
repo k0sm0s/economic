@@ -107,7 +107,6 @@ function economic_cron(){
                     //if economic user update data
                     if(in_array('e-conomic user', $user->roles)){
                         unset($newuserdata['pass']);
-                        if($newuserdata['uid'] == 1) $newuserdata['pass'] = '123456';
                         //check if needs update
                         if(_economic_compare_user_data($user, $economic_user) == false)
                             user_save($user, $newuserdata);
