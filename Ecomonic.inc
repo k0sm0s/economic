@@ -4,9 +4,9 @@ class Ecomonic
 {
     const wsdlUrl = 'https://api.e-conomic.com/secure/api1/EconomicWebservice.asmx?WSDL';
 
-    private $agreementNumber;// = 844893;
-    private $username;// = "Jør";
-    private $password;// = "kzdfgfm7";
+    private $agreementNumber;
+    private $username;
+    private $password;
     private $client = null;
 
     function __construct($agreementNumber, $username, $password)
