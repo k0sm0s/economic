@@ -96,21 +96,59 @@ function economic_cron(){
             foreach ($debtorHandle as $d) {
                 $user = user_load($d->Number);
                 $economic_user = $economic->debtor_GetData($d);
-                $newuserdata = _economic_create_user_data($economic_user);
-                //check ids in drupal
-                //if does not exist
-                if($user == false){
-                    //add to drupal
-                    $newuserdata['roles'] = array($rid => "e-conomic user");
-                    user_save(null, $newuserdata);
-                }else{
-                    //if economic user update data
-                    if(in_array('e-conomic user', $user->roles)){
-                        unset($newuserdata['pass']);
-                        if($newuserdata['uid'] == 1) $newuserdata['pass'] = '123456';
-                        //check if needs update
-                        if(_economic_compare_user_data($user, $economic_user) == false)
-                            user_save($user, $newuserdata);
+                _economic_manage_user($user, $economic_user, $rid);
+
+                //manage user invoices
+                $entriesHandle = $economic->debtor_GetEntries($d);
+                if($entriesHandle != null){
+                    $entryesdata = $economic->entry_GetDataArray($entriesHandle);
+                    foreach ($entryesdata as $entry) {
+                        //check if exists
+                        $query = new EntityFieldQuery();
+                        $result = $query
+                            ->entityCondition('entity_type', 'node')
+                            ->fieldCondition('field_economic_invoice_serialnum', 'value', $entry->SerialNumber, '=')
+                            ->execute();
+
+                        if($result){
+                            //exist
+                            //update
+                            $param = array_keys($result['node']);
+                            $node = node_load(array_shift($param));
+                            $node->field_economic_date['und'][0]['value']               = $entry->Date;
+                            $node->field_economic_invoice_entry['und'][0]['value']      = $entry->VoucherNumber;
+                            $node->field_economic_invoice_invoice['und'][0]['value']    = "0";
+                            if(property_exists($entry, 'Text'))
+                                $node->field_economic_invoice_text['und'][0]['value']   = $entry->Text;
+                            $node->field_economic_invoice_amount['und'][0]['value']     = $entry->Amount;
+                            $node->field_economic_invoice_balance['und'][0]['value']    = "0";
+
+                            node_save($node);
+                            break;
+                        }
+                        else{
+                            //does not exist
+                            //create
+                            $node = new StdClass();
+                            $node->type = 'e_conomic_invoice';
+                            node_object_prepare($node);
+
+                            $node->title = 'invoice ' . $entry->SerialNumber;
+                            $node->language = LANGUAGE_NONE;
+
+                            $node->field_economic_invoice_date[$node->language][0]['value']     = $entry->Date;
+                            $node->field_economic_invoice_entry[$node->language][0]['value']    = $entry->VoucherNumber;
+                            $node->field_economic_invoice_invoice[$node->language][0]['value']  = "0";
+                            if(property_exists($entry, 'Text'))
+                                $node->field_economic_invoice_text[$node->language][0]['value'] = $entry->Text;
+                            $node->field_economic_invoice_amount[$node->language][0]['value']   = $entry->Amount;
+                            $node->field_economic_invoice_balance[$node->language][0]['value']  = "0";
+                            $node->field_economic_invoice_serialnum[$node->language][0]['value']= $entry->SerialNumber;
+
+                            $node = node_submit($node);
+                            node_save($node);
+
+                        }
                     }
                 }
             }
@@ -119,6 +157,32 @@ function economic_cron(){
     }
     catch(Exception $e){
         drupal_set_message($e->getMessage(), "error");
+    }
+}
+
+/**
+ * Create or update user in drupal
+ * @param $user
+ * @param $economic_user
+ * @param $rid
+ */
+function _economic_manage_user($user, $economic_user, $rid){
+    $newuserdata = _economic_create_user_data($economic_user);
+    //check ids in drupal
+    //if does not exist
+    if($user == false){
+        //add to drupal
+        $newuserdata['roles'] = array($rid => "e-conomic user");
+        user_save(null, $newuserdata);
+    }else{
+        //if economic user update data
+        if(in_array('e-conomic user', $user->roles)){
+            unset($newuserdata['pass']);
+            if($newuserdata['uid'] == 1) $newuserdata['pass'] = '123456';
+            //check if needs update
+            if(_economic_compare_user_data($user, $economic_user) == false)
+                user_save($user, $newuserdata);
+        }
     }
 }
 

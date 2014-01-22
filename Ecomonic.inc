@@ -233,6 +233,38 @@ class Ecomonic
             throw new Exception("Not Connected.");
     }
 
+
+    /**
+     * Return debtorhandles for specific user
+     * @param $debtorHandle
+     *
+     * @return mixed
+     * @throws Exception
+     */
+    public function debtor_GetEntries($debtorHandle){
+        if($this->client != null){
+            $entriesHandle = $this->client->Debtor_GetEntries(array('debtorHandle' => $debtorHandle))->Debtor_GetEntriesResult;//->DebtorEntryHandle;
+            if(count((array)$entriesHandle) == 0) return null;
+            return $entriesHandle->DebtorEntryHandle;
+        }else
+            throw new Exception("Not Connected.");
+    }
+
+    /**
+     * Get data for specified entries
+     * @param $entriesHandle
+     *
+     * @return mixed
+     * @throws Exception
+     */
+    public function entry_GetDataArray($entriesHandle){
+        if($this->client != null){
+            $entriesDataObjects = $this->client->Entry_GetDataArray(array('entityHandles' => $entriesHandle))->Entry_GetDataArrayResult->EntryData;
+            return $entriesDataObjects;
+        }else
+            throw new Exception("Not Connected.");
+    }
+
     public function getAgreementNumber(){return $this->agreementNumber;}
     public function getPassword(){return $this->password;}
     public function getUsername(){return $this->username;}
