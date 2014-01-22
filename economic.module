@@ -64,7 +64,7 @@ function economic_admin_settings_form($node, &$form_state){
 
     $form['economic_password'] = array(
         '#title' => t("Password"),
-        '#type' => 'textfield',
+        '#type' => 'password',
         '#required' => true,
         '#default_value' => variable_get("economic_password")
     );
@@ -103,6 +103,8 @@ function economic_cron(){
                 if($entriesHandle != null){
                     $entryesdata = $economic->entry_GetDataArray($entriesHandle);
                     foreach ($entryesdata as $entry) {
+                        //todo:remove
+                        break;
                         //check if exists
                         $query = new EntityFieldQuery();
                         $result = $query
@@ -115,15 +117,19 @@ function economic_cron(){
                             //update
                             $param = array_keys($result['node']);
                             $node = node_load(array_shift($param));
-                            $node->field_economic_date['und'][0]['value']               = $entry->Date;
-                            $node->field_economic_invoice_entry['und'][0]['value']      = $entry->VoucherNumber;
-                            $node->field_economic_invoice_invoice['und'][0]['value']    = "0";
-                            if(property_exists($entry, 'Text'))
-                                $node->field_economic_invoice_text['und'][0]['value']   = $entry->Text;
-                            $node->field_economic_invoice_amount['und'][0]['value']     = $entry->Amount;
-                            $node->field_economic_invoice_balance['und'][0]['value']    = "0";
 
-                            node_save($node);
+                            if(_economic_compare_node_data($node, $entry) == false){
+                                $node->field_economic_date['und'][0]['value']               = $entry->Date;
+                                $node->field_economic_invoice_entry['und'][0]['value']      = $entry->VoucherNumber;
+                                $node->field_economic_invoice_invoice['und'][0]['value']    = "0";
+                                if(property_exists($entry, 'Text'))
+                                    $node->field_economic_invoice_text['und'][0]['value']   = $entry->Text;
+                                $node->field_economic_invoice_amount['und'][0]['value']     = $entry->Amount;
+                                $node->field_economic_invoice_balance['und'][0]['value']    = "0";
+
+                                node_save($node);
+                            }
+                            //todo: remove
                             break;
                         }
                         else{
@@ -156,8 +162,28 @@ function economic_cron(){
         }
     }
     catch(Exception $e){
-        drupal_set_message($e->getMessage(), "error");
+        //code:23000 same email address
+        drupal_set_message($e->getCode() .  $e->getMessage(), "error");
     }
+}
+
+/**
+ * Check if node and entry are same
+ * @param $node
+ * @param $entry
+ *
+ * @return bool
+ * true same. false different.
+ */
+function _economic_compare_node_data($node, $entry){
+    if($node->field_economic_date['und'][0]['value']               != $entry->Date) return false;
+    if($node->field_economic_invoice_entry['und'][0]['value']      != $entry->VoucherNumber) return false;
+    if($node->field_economic_invoice_invoice['und'][0]['value']    != "0") return false;
+    if(property_exists($entry, 'Text'))
+        if($node->field_economic_invoice_text['und'][0]['value']   != $entry->Text) return false;
+    if($node->field_economic_invoice_amount['und'][0]['value']     != $entry->Amount) return false;
+    if($node->field_economic_invoice_balance['und'][0]['value']    != "0") return false;
+    return true;
 }
 
 /**
@@ -168,20 +194,22 @@ function economic_cron(){
  */
 function _economic_manage_user($user, $economic_user, $rid){
     $newuserdata = _economic_create_user_data($economic_user);
-    //check ids in drupal
-    //if does not exist
-    if($user == false){
-        //add to drupal
-        $newuserdata['roles'] = array($rid => "e-conomic user");
-        user_save(null, $newuserdata);
-    }else{
-        //if economic user update data
-        if(in_array('e-conomic user', $user->roles)){
-            unset($newuserdata['pass']);
-            if($newuserdata['uid'] == 1) $newuserdata['pass'] = '123456';
-            //check if needs update
-            if(_economic_compare_user_data($user, $economic_user) == false)
-                user_save($user, $newuserdata);
+    if($newuserdata != null){
+        //check ids in drupal
+        //if does not exist
+        if($user == false){
+            //add to drupal
+            $newuserdata['roles'] = array($rid => "e-conomic user");
+            user_save(null, $newuserdata);
+        }else{
+            //if economic user update data
+            if(in_array('e-conomic user', $user->roles)){
+                unset($newuserdata['pass']);
+                if($newuserdata['uid'] == 1) $newuserdata['pass'] = '123456';
+                //check if needs update
+                if(_economic_compare_user_data($user, $economic_user) == false)
+                    user_save($user, $newuserdata);
+            }
         }
     }
 }
@@ -219,9 +247,14 @@ function _economic_get_value($var){
 /**
  * Creates user data array with values from economic user
  * @param $economic_user
- * @return array
+ * @return array null
  */
 function _economic_create_user_data($economic_user){
+    if(!property_exists($economic_user, 'Email')){
+        watchdog('ecomonic', 'Empty email address for user id: @id', array('@id' => $economic_user->Number));
+        return null;
+    }
+
     $newuser = array(
         'uid'  => $economic_user->Number,
         'name' => $economic_user->Email,
