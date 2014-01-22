@@ -103,54 +103,7 @@ function economic_cron(){
                 if($entriesHandle != null){
                     $entryesdata = $economic->entry_GetDataArray($entriesHandle);
                     foreach ($entryesdata as $entry) {
-                        //check if exists
-                        $query = new EntityFieldQuery();
-                        $result = $query
-                            ->entityCondition('entity_type', 'node')
-                            ->fieldCondition('field_economic_invoice_serialnum', 'value', $entry->SerialNumber, '=')
-                            ->execute();
-
-                        if($result){
-                            //exist
-                            //update
-                            $param = array_keys($result['node']);
-                            $node = node_load(array_shift($param));
-
-                            if(_economic_compare_node_data($node, $entry) == false){
-                                $node->field_economic_date['und'][0]['value']               = $entry->Date;
-                                $node->field_economic_invoice_entry['und'][0]['value']      = $entry->VoucherNumber;
-                                $node->field_economic_invoice_invoice['und'][0]['value']    = "0";
-                                if(property_exists($entry, 'Text'))
-                                    $node->field_economic_invoice_text['und'][0]['value']   = $entry->Text;
-                                $node->field_economic_invoice_amount['und'][0]['value']     = $entry->Amount;
-                                $node->field_economic_invoice_balance['und'][0]['value']    = "0";
-
-                                node_save($node);
-                            }
-                        }
-                        else{
-                            //does not exist
-                            //create
-                            $node = new StdClass();
-                            $node->type = 'e_conomic_invoice';
-                            node_object_prepare($node);
-
-                            $node->title = 'invoice ' . $entry->SerialNumber;
-                            $node->language = LANGUAGE_NONE;
-
-                            $node->field_economic_invoice_date[$node->language][0]['value']     = $entry->Date;
-                            $node->field_economic_invoice_entry[$node->language][0]['value']    = $entry->VoucherNumber;
-                            $node->field_economic_invoice_invoice[$node->language][0]['value']  = "0";
-                            if(property_exists($entry, 'Text'))
-                                $node->field_economic_invoice_text[$node->language][0]['value'] = $entry->Text;
-                            $node->field_economic_invoice_amount[$node->language][0]['value']   = $entry->Amount;
-                            $node->field_economic_invoice_balance[$node->language][0]['value']  = "0";
-                            $node->field_economic_invoice_serialnum[$node->language][0]['value']= $entry->SerialNumber;
-
-                            $node = node_submit($node);
-                            node_save($node);
-
-                        }
+                        _economic_manage_entry($entry);
                     }
                 }
             }
@@ -160,6 +113,60 @@ function economic_cron(){
     catch(Exception $e){
         //code:23000 same email address
         drupal_set_message($e->getCode() .  $e->getMessage(), "error");
+    }
+}
+
+/**
+ * Manage entries.
+ * @param $entry
+ */
+function _economic_manage_entry($entry){
+    //check if exists
+    $query = new EntityFieldQuery();
+    $result = $query
+        ->entityCondition('entity_type', 'node')
+        ->fieldCondition('field_economic_invoice_serialnum', 'value', $entry->SerialNumber, '=')
+        ->execute();
+
+    if($result){
+        //exist
+        //update
+        $param = array_keys($result['node']);
+        $node = node_load(array_shift($param));
+
+        if(_economic_compare_node_data($node, $entry) == false){
+            $node->field_economic_date['und'][0]['value']               = $entry->Date;
+            $node->field_economic_invoice_entry['und'][0]['value']      = $entry->VoucherNumber;
+            $node->field_economic_invoice_invoice['und'][0]['value']    = "0";
+            if(property_exists($entry, 'Text'))
+                $node->field_economic_invoice_text['und'][0]['value']   = $entry->Text;
+            $node->field_economic_invoice_amount['und'][0]['value']     = $entry->Amount;
+            $node->field_economic_invoice_balance['und'][0]['value']    = "0";
+
+            node_save($node);
+        }
+    }
+    else{
+        //does not exist
+        //create
+        $node = new StdClass();
+        $node->type = 'e_conomic_invoice';
+        node_object_prepare($node);
+
+        $node->title = 'invoice ' . $entry->SerialNumber;
+        $node->language = LANGUAGE_NONE;
+
+        $node->field_economic_invoice_date[$node->language][0]['value']     = $entry->Date;
+        $node->field_economic_invoice_entry[$node->language][0]['value']    = $entry->VoucherNumber;
+        $node->field_economic_invoice_invoice[$node->language][0]['value']  = "0";
+        if(property_exists($entry, 'Text'))
+            $node->field_economic_invoice_text[$node->language][0]['value'] = $entry->Text;
+        $node->field_economic_invoice_amount[$node->language][0]['value']   = $entry->Amount;
+        $node->field_economic_invoice_balance[$node->language][0]['value']  = "0";
+        $node->field_economic_invoice_serialnum[$node->language][0]['value']= $entry->SerialNumber;
+
+        $node = node_submit($node);
+        node_save($node);
     }
 }
 
