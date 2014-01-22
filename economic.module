@@ -103,8 +103,6 @@ function economic_cron(){
                 if($entriesHandle != null){
                     $entryesdata = $economic->entry_GetDataArray($entriesHandle);
                     foreach ($entryesdata as $entry) {
-                        //todo:remove
-                        break;
                         //check if exists
                         $query = new EntityFieldQuery();
                         $result = $query
@@ -129,8 +127,6 @@ function economic_cron(){
 
                                 node_save($node);
                             }
-                            //todo: remove
-                            break;
                         }
                         else{
                             //does not exist
