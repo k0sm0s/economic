@@ -244,6 +244,7 @@ class Ecomonic
     public function debtor_GetEntries($debtorHandle){
         if($this->client != null){
             $entriesHandle = $this->client->Debtor_GetEntries(array('debtorHandle' => $debtorHandle))->Debtor_GetEntriesResult;//->DebtorEntryHandle;
+            debug(count((array)$entriesHandle));
             if(count((array)$entriesHandle) == 0) return null;
             return $entriesHandle->DebtorEntryHandle;
         }else
