@@ -136,7 +136,8 @@ function _economic_manage_entry($entry){
         $node = node_load(array_shift($param));
 
         if(_economic_compare_node_data($node, $entry) == false){
-            $node->field_economic_invoice_date['und'][0]['value']               = $entry->Date;
+            $node->field_economic_invoice_accountid['und'][0]['value']  = $entry->AccountHandle->Number;
+            $node->field_economic_invoice_date['und'][0]['value']       = $entry->Date;
             $node->field_economic_invoice_entry['und'][0]['value']      = $entry->VoucherNumber;
             $node->field_economic_invoice_invoice['und'][0]['value']    = "0";
             if(property_exists($entry, 'Text'))
@@ -157,6 +158,7 @@ function _economic_manage_entry($entry){
         $node->title = 'invoice ' . $entry->SerialNumber;
         $node->language = LANGUAGE_NONE;
 
+        $node->field_economic_invoice_accountid['und'][0]['value']          = $entry->AccountHandle->Number;
         $node->field_economic_invoice_date[$node->language][0]['value']     = $entry->Date;
         $node->field_economic_invoice_entry[$node->language][0]['value']    = $entry->VoucherNumber;
         $node->field_economic_invoice_invoice[$node->language][0]['value']  = "0";
@@ -180,6 +182,7 @@ function _economic_manage_entry($entry){
  * true same. false different.
  */
 function _economic_compare_node_data($node, $entry){
+    if($node->field_economic_invoice_accountid['und'][0]['value']  != $entry->AccountHandle->Number) return false;
     if($node->field_economic_invoice_date['und'][0]['value']       != $entry->Date) return false;
     if($node->field_economic_invoice_entry['und'][0]['value']      != $entry->VoucherNumber) return false;
     if($node->field_economic_invoice_invoice['und'][0]['value']    != "0") return false;
