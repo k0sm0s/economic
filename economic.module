@@ -102,9 +102,10 @@ function economic_cron(){
                 $entriesHandle = $economic->debtor_GetEntries($d);
                 if($entriesHandle != null){
                     $entryesdata = $economic->entry_GetDataArray($entriesHandle);
-                    foreach ($entryesdata as $entry) {
-                        _economic_manage_entry($entry);
-                    }
+                    if($entryesdata != null)
+                        foreach ($entryesdata as $entry) {
+                            _economic_manage_entry($entry);
+                        }
                 }
             }
             $economic->disconnect();
