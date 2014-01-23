@@ -244,8 +244,6 @@ class Ecomonic
     public function debtor_GetEntries($debtorHandle){
         if($this->client != null){
             $entriesHandle = $this->client->Debtor_GetEntries(array('debtorHandle' => $debtorHandle))->Debtor_GetEntriesResult;//->DebtorEntryHandle;
-            debug(count((array)$entriesHandle));
-            debug($entriesHandle);
             if(count((array)$entriesHandle) == 0) return null;
             return $entriesHandle->DebtorEntryHandle;
         }else
@@ -261,8 +259,9 @@ class Ecomonic
      */
     public function entry_GetDataArray($entriesHandle){
         if($this->client != null){
-            $entriesDataObjects = $this->client->Entry_GetDataArray(array('entityHandles' => $entriesHandle))->Entry_GetDataArrayResult->EntryData;
-            return $entriesDataObjects;
+            $entriesDataObjects = $this->client->Entry_GetDataArray(array('entityHandles' => $entriesHandle))->Entry_GetDataArrayResult;
+            if(count((array)$entriesDataObjects) == 0) return null;
+            return $entriesDataObjects->EntryData;
         }else
             throw new Exception("Not Connected.");
     }
