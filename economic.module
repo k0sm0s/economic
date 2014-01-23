@@ -113,7 +113,7 @@ function economic_cron(){
     }
     catch(Exception $e){
         //code:23000 same email address
-        drupal_set_message($e->getCode() .  $e->getMessage(), "error");
+        watchdog("economic", $e->getMessage());
     }
 }
 
