@@ -137,7 +137,7 @@ function _economic_manage_entry($entry, $userid){
         $node = node_load(array_shift($param));
         if($node != false){
             if(_economic_compare_node_data($node, $entry, $userid) == false){
-                $node->title['und'][0]['value']                             = 'invoice ' . $entry->SerialNumber;
+                //$node->title['und'][0]['value']                             = 'invoice ' . $entry->SerialNumber;
                 $node->field_economic_invoice_accountid['und'][0]['value']  = $userid;
                 $node->field_economic_invoice_date['und'][0]['value']       = $entry->Date;
                 $node->field_economic_invoice_entry['und'][0]['value']      = $entry->VoucherNumber;
@@ -146,7 +146,7 @@ function _economic_manage_entry($entry, $userid){
                     $node->field_economic_invoice_text['und'][0]['value']   = $entry->Text;
                 $node->field_economic_invoice_amount['und'][0]['value']     = $entry->Amount;
                 $node->field_economic_invoice_balance['und'][0]['value']    = "0";
-    
+
                 node_save($node);
             }
         }
