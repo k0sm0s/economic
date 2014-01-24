@@ -104,7 +104,7 @@ function economic_cron(){
                     $entryesdata = $economic->entry_GetDataArray($entriesHandle);
                     if($entryesdata != null)
                         foreach ($entryesdata as $entry) {
-                            _economic_manage_entry($entry);
+                            _economic_manage_entry($entry, $d->Number);
                         }
                 }
             }
@@ -121,7 +121,7 @@ function economic_cron(){
  * Manage entries.
  * @param $entry
  */
-function _economic_manage_entry($entry){
+function _economic_manage_entry($entry, $userid){
     //check if exists
     $query = new EntityFieldQuery();
     $result = $query
@@ -129,23 +129,26 @@ function _economic_manage_entry($entry){
         ->fieldCondition('field_economic_invoice_serialnum', 'value', $entry->SerialNumber, '=')
         ->execute();
 
+    //$result = false;
     if($result){
         //exist
         //update
         $param = array_keys($result['node']);
         $node = node_load(array_shift($param));
-
-        if(_economic_compare_node_data($node, $entry) == false){
-            $node->field_economic_invoice_accountid['und'][0]['value']  = $entry->AccountHandle->Number;
-            $node->field_economic_invoice_date['und'][0]['value']       = $entry->Date;
-            $node->field_economic_invoice_entry['und'][0]['value']      = $entry->VoucherNumber;
-            $node->field_economic_invoice_invoice['und'][0]['value']    = "0";
-            if(property_exists($entry, 'Text'))
-                $node->field_economic_invoice_text['und'][0]['value']   = $entry->Text;
-            $node->field_economic_invoice_amount['und'][0]['value']     = $entry->Amount;
-            $node->field_economic_invoice_balance['und'][0]['value']    = "0";
-
-            node_save($node);
+        if($node != false){
+            if(_economic_compare_node_data($node, $entry, $userid) == false){
+                $node->title['und'][0]['value']                             = 'invoice ' . $entry->SerialNumber;
+                $node->field_economic_invoice_accountid['und'][0]['value']  = $userid;
+                $node->field_economic_invoice_date['und'][0]['value']       = $entry->Date;
+                $node->field_economic_invoice_entry['und'][0]['value']      = $entry->VoucherNumber;
+                $node->field_economic_invoice_invoice['und'][0]['value']    = "0";
+                if(property_exists($entry, 'Text'))
+                    $node->field_economic_invoice_text['und'][0]['value']   = $entry->Text;
+                $node->field_economic_invoice_amount['und'][0]['value']     = $entry->Amount;
+                $node->field_economic_invoice_balance['und'][0]['value']    = "0";
+    
+                node_save($node);
+            }
         }
     }
     else{
@@ -158,7 +161,7 @@ function _economic_manage_entry($entry){
         $node->title = 'invoice ' . $entry->SerialNumber;
         $node->language = LANGUAGE_NONE;
 
-        $node->field_economic_invoice_accountid['und'][0]['value']          = $entry->AccountHandle->Number;
+        $node->field_economic_invoice_accountid['und'][0]['value']          = $userid;
         $node->field_economic_invoice_date[$node->language][0]['value']     = $entry->Date;
         $node->field_economic_invoice_entry[$node->language][0]['value']    = $entry->VoucherNumber;
         $node->field_economic_invoice_invoice[$node->language][0]['value']  = "0";
@@ -181,8 +184,8 @@ function _economic_manage_entry($entry){
  * @return bool
  * true same. false different.
  */
-function _economic_compare_node_data($node, $entry){
-    if($node->field_economic_invoice_accountid['und'][0]['value']  != $entry->AccountHandle->Number) return false;
+function _economic_compare_node_data($node, $entry, $userid){
+    if($node->field_economic_invoice_accountid['und'][0]['value']  != $userid) return false;
     if($node->field_economic_invoice_date['und'][0]['value']       != $entry->Date) return false;
     if($node->field_economic_invoice_entry['und'][0]['value']      != $entry->VoucherNumber) return false;
     if($node->field_economic_invoice_invoice['und'][0]['value']    != "0") return false;
