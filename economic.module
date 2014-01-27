@@ -156,6 +156,7 @@ function _economic_manage_entry($entry, $userid){
         //create
         $node = new StdClass();
         $node->type = 'e_conomic_invoice';
+        $node->promote = 0;
         node_object_prepare($node);
 
         $node->title = 'invoice ' . $entry->SerialNumber;
@@ -215,7 +216,6 @@ function _economic_manage_user($user, $economic_user, $rid){
             //if economic user update data
             if(in_array('e-conomic user', $user->roles)){
                 unset($newuserdata['pass']);
-                if($newuserdata['uid'] == 1) $newuserdata['pass'] = '123456';
                 //check if needs update
                 if(_economic_compare_user_data($user, $economic_user) == false)
                     user_save($user, $newuserdata);
