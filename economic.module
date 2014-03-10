@@ -104,6 +104,8 @@ function economic_cron(){
                     $entryesdata = $economic->entry_GetDataArray($entriesHandle);
                     if($entryesdata != null)
                         foreach ($entryesdata as $entry) {
+                            $invoicenumber = $economic->debtorEntry_GetInvoiceNumber($entry->Handle);
+                            $entry->invoiceNumber = $invoicenumber;
                             _economic_manage_entry($entry, $d->Number);
                         }
                 }
@@ -141,7 +143,7 @@ function _economic_manage_entry($entry, $userid){
                 $node->field_economic_invoice_accountid['und'][0]['value']  = $userid;
                 $node->field_economic_invoice_date['und'][0]['value']       = $entry->Date;
                 $node->field_economic_invoice_entry['und'][0]['value']      = $entry->VoucherNumber;
-                $node->field_economic_invoice_invoice['und'][0]['value']    = "0";
+                $node->field_economic_invoice_invoice['und'][0]['value']    = $entry->invoiceNumber;
                 if(property_exists($entry, 'Text'))
                     $node->field_economic_invoice_text['und'][0]['value']   = $entry->Text;
                 $node->field_economic_invoice_amount['und'][0]['value']     = $entry->Amount;
@@ -165,7 +167,7 @@ function _economic_manage_entry($entry, $userid){
         $node->field_economic_invoice_accountid['und'][0]['value']          = $userid;
         $node->field_economic_invoice_date[$node->language][0]['value']     = $entry->Date;
         $node->field_economic_invoice_entry[$node->language][0]['value']    = $entry->VoucherNumber;
-        $node->field_economic_invoice_invoice[$node->language][0]['value']  = "0";
+        $node->field_economic_invoice_invoice[$node->language][0]['value']  = $entry->invoiceNumber;
         if(property_exists($entry, 'Text'))
             $node->field_economic_invoice_text[$node->language][0]['value'] = $entry->Text;
         $node->field_economic_invoice_amount[$node->language][0]['value']   = $entry->Amount;
@@ -189,7 +191,7 @@ function _economic_compare_node_data($node, $entry, $userid){
     if($node->field_economic_invoice_accountid['und'][0]['value']  != $userid) return false;
     if($node->field_economic_invoice_date['und'][0]['value']       != $entry->Date) return false;
     if($node->field_economic_invoice_entry['und'][0]['value']      != $entry->VoucherNumber) return false;
-    if($node->field_economic_invoice_invoice['und'][0]['value']    != "0") return false;
+    if($node->field_economic_invoice_invoice['und'][0]['value']    != $entry->invoiceNumber) return false;
     if(property_exists($entry, 'Text'))
         if($node->field_economic_invoice_text['und'][0]['value']   != $entry->Text) return false;
     if($node->field_economic_invoice_amount['und'][0]['value']     != $entry->Amount) return false;

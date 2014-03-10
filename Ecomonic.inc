@@ -266,6 +266,23 @@ class Ecomonic
             throw new Exception("Not Connected.");
     }
 
+
+    /**
+     * Gets the invoice number of the debtor entry
+     * @param $debtorEntryHandle
+     *
+     * @return null | int
+     * @throws Exception
+     */
+    public function debtorEntry_GetInvoiceNumber($debtorEntryHandle){
+        if($this->client != null){
+            $invoiceNumber = $this->client->DebtorEntry_GetInvoiceNumber(array('debtorEntryHandle' => $debtorEntryHandle))->DebtorEntry_GetInvoiceNumberResult;
+            if(count((array)$invoiceNumber) == 0) return null;
+            return $invoiceNumber;
+        }else
+            throw new Exception("Not Connected.");
+    }
+
     public function getAgreementNumber(){return $this->agreementNumber;}
     public function getPassword(){return $this->password;}
     public function getUsername(){return $this->username;}
