@@ -96,7 +96,7 @@ function economic_cron(){
             foreach ($debtorHandle as $d) {
                 $economic_user = $economic->debtor_GetData($d);
                 $account = _economic_load_user($economic_user->Number);
-                //_economic_manage_user($account, $economic_user, $rid);
+                _economic_manage_user($account, $economic_user, $rid);
 
                 //manage user invoices
 //                $entriesHandle = $economic->debtor_GetEntries($d);
@@ -128,8 +128,6 @@ function _economic_load_user($id){
 
     if($result){
         $param = array_keys($result['user']);
-        //drupal_set_message("load_user: " . array_shift($param));
-        //debug(array_shift($param));
         //$account = user_load(array_shift($param));
         $account = user_load($param[0]);
         return $account;
