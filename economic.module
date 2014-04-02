@@ -271,7 +271,7 @@ function _economic_create_user_data($economic_user){
     $result = user_load_by_name($economic_user->Email);
     if($result) {
         watchdog('economic', 'User with name: @name allready exist (id: @id1, @id2)',
-            array('@name' => $economic_user->Email, '@id1' => $result->name, '@id2' => $economic_user->Number), WATCHDOG_ERROR);
+            array('@name' => $economic_user->Email, '@id1' => $result->uid, '@id2' => $economic_user->Number), WATCHDOG_ERROR);
         return null;
     }
 
