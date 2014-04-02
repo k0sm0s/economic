@@ -267,6 +267,17 @@ function _economic_create_user_data($economic_user){
         return null;
     }
 
+    //check if name exist
+    $query = new EntityFieldQuery();
+    $result = $query
+        ->entityCondition('entity_type', 'user')
+        ->fieldCondition('name', 'value', $economic_user->Email, '=')
+        ->execute();
+    if($result) {
+        watchdog('economic', 'User with name: @name allready exist', array('@name' => $economic_user->Email), WATCHDOG_ERROR);
+        return null;
+    }
+
     $newuser = array(
         'uid'  => $economic_user->Number,
         'name' => $economic_user->Email,
