@@ -99,16 +99,16 @@ function economic_cron(){
                 _economic_manage_user($account, $economic_user, $rid);
 
                 //manage user invoices
-//                $entriesHandle = $economic->debtor_GetEntries($d);
-//                if($entriesHandle != null){
-//                    $entryesdata = $economic->entry_GetDataArray($entriesHandle);
-//                    if($entryesdata != null)
-//                        foreach ($entryesdata as $entry) {
-//                            $invoicenumber = $economic->debtorEntry_GetInvoiceNumber($entry->Handle);
-//                            $entry->invoiceNumber = $invoicenumber;
-//                            _economic_manage_entry($entry, $economic_user->Number);
-//                        }
-//                }
+                $entriesHandle = $economic->debtor_GetEntries($d);
+                if($entriesHandle != null){
+                    $entryesdata = $economic->entry_GetDataArray($entriesHandle);
+                    if($entryesdata != null)
+                        foreach ($entryesdata as $entry) {
+                            $invoicenumber = $economic->debtorEntry_GetInvoiceNumber($entry->Handle);
+                            $entry->invoiceNumber = $invoicenumber;
+                            _economic_manage_entry($entry, $economic_user->Number);
+                        }
+                }
             }
             $economic->disconnect();
         }
@@ -232,14 +232,12 @@ function _economic_manage_user($account, $economic_user, $rid){
             //check if name exist
             $result = user_load_by_name($economic_user->Email);
             if($result) {
-                watchdog('economic', 'User with name: @name allready exist (id: @id1, @id2)',
-                    array('@name' => $economic_user->Email, '@id1' => $result->uid, '@id2' => $economic_user->Number), WATCHDOG_ERROR);
-
+                watchdog('economic', 'User with name: @name allready exist',
+                    array('@name' => $economic_user->Email), WATCHDOG_ERROR);
             }else{
                 $newuserdata['roles'] = array($rid => "e-conomic user");
                 user_save(null, $newuserdata);
             }
-
 
         }else{
             //if economic user update data
