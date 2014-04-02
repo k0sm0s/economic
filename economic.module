@@ -278,7 +278,7 @@ function _economic_get_value($var){
  */
 function _economic_create_user_data($economic_user){
     if(!property_exists($economic_user, 'Email')){
-        watchdog('ecomonic', 'Empty email address for user id: @id', array('@id' => $economic_user->Number), WATCHDOG_ERROR);
+        //watchdog('ecomonic', 'Empty email address for user id: @id', array('@id' => $economic_user->Number), WATCHDOG_ERROR);
         return null;
     }
 
