@@ -127,6 +127,7 @@ function _economic_load_user($id){
         ->execute();
     if($result){
         $param = array_keys($result['user']);
+        drupal_set_message("load_user: " . array_shift($param));
         $account = user_load(array_shift($param));
         return $account;
     }
