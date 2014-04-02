@@ -228,8 +228,20 @@ function _economic_manage_user($account, $economic_user, $rid){
         //if does not exist
         if($account == false){
             //add to drupal
-            $newuserdata['roles'] = array($rid => "e-conomic user");
-            user_save(null, $newuserdata);
+
+            //check if name exist
+            $result = user_load_by_name($economic_user->Email);
+            if($result) {
+                watchdog('economic', 'User with name: @name allready exist (id: @id1, @id2)',
+                    array('@name' => $economic_user->Email, '@id1' => $result->uid, '@id2' => $economic_user->Number), WATCHDOG_ERROR);
+                return null;
+                
+            }else{
+                $newuserdata['roles'] = array($rid => "e-conomic user");
+                user_save(null, $newuserdata);
+            }
+
+
         }else{
             //if economic user update data
             if(in_array('e-conomic user', $account->roles)){
