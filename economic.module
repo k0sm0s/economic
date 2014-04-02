@@ -234,8 +234,7 @@ function _economic_manage_user($account, $economic_user, $rid){
             if($result) {
                 watchdog('economic', 'User with name: @name allready exist (id: @id1, @id2)',
                     array('@name' => $economic_user->Email, '@id1' => $result->uid, '@id2' => $economic_user->Number), WATCHDOG_ERROR);
-                return null;
-                
+
             }else{
                 $newuserdata['roles'] = array($rid => "e-conomic user");
                 user_save(null, $newuserdata);
