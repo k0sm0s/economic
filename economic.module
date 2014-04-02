@@ -95,9 +95,12 @@ function economic_cron(){
 
             foreach ($debtorHandle as $d) {
                 $economic_user = $economic->debtor_GetData($d);
-                $user = user_load($economic_user->Number);
-                drupal_set_message("user_load(" . $economic_user->Number . ")");
-                _economic_manage_user($user, $economic_user, $rid);
+                $account = user_load($economic_user->Number);
+                if($account != false)
+                    drupal_set_message("user_load(" . $economic_user->Number . ") => " . $account->uid);
+                else
+                    drupal_set_message("user_load(" . $economic_user->Number . ") => false");
+                _economic_manage_user($account, $economic_user, $rid);
 
                 //manage user invoices
                 $entriesHandle = $economic->debtor_GetEntries($d);
@@ -202,26 +205,26 @@ function _economic_compare_node_data($node, $entry, $userid){
 
 /**
  * Create or update user in drupal
- * @param $user
+ * @param $account
  * @param $economic_user
  * @param $rid
  */
-function _economic_manage_user($user, $economic_user, $rid){
+function _economic_manage_user($account, $economic_user, $rid){
     $newuserdata = _economic_create_user_data($economic_user);
     if($newuserdata != null){
         //check ids in drupal
         //if does not exist
-        if($user == false){
+        if($account == false){
             //add to drupal
             $newuserdata['roles'] = array($rid => "e-conomic user");
             user_save(null, $newuserdata);
         }else{
             //if economic user update data
-            if(in_array('e-conomic user', $user->roles)){
+            if(in_array('e-conomic user', $account->roles)){
                 unset($newuserdata['pass']);
                 //check if needs update
-                if(_economic_compare_user_data($user, $economic_user) == false)
-                    user_save($user, $newuserdata);
+                if(_economic_compare_user_data($account, $economic_user) == false)
+                    user_save($account, $newuserdata);
             }
         }
     }
@@ -229,26 +232,26 @@ function _economic_manage_user($user, $economic_user, $rid){
 
 /**
  * Compare drupal user and economic user for changes
- * @param $user
+ * @param $account
  * @param $economic_user
  *
  * @return bool
  * true if objects same. false if something changed
  */
-function _economic_compare_user_data($user, $economic_user){
-    if($user->uid               != $economic_user->Number)      return false;
-    if($user->name              != $economic_user->Email)       return false;
-    if($user->mail              != $economic_user->Email)       return false;
-    if(_economic_get_value(@$user->economic_name['und'][0]['value'])          != $economic_user->Name)        return false;
+function _economic_compare_user_data($account, $economic_user){
+    if($account->uid               != $economic_user->Number)      return false;
+    if($account->name              != $economic_user->Email)       return false;
+    if($account->mail              != $economic_user->Email)       return false;
+    if(_economic_get_value(@$account->economic_name['und'][0]['value'])          != $economic_user->Name)        return false;
     if(isset($economic_user->Address))
-        if(_economic_get_value($user->economic_address['und'][0]['value'])   != $economic_user->Address)     return false;
+        if(_economic_get_value($account->economic_address['und'][0]['value'])   != $economic_user->Address)     return false;
     if(isset($economic_user->PostalCode))
-        if(_economic_get_value($user->economic_postalcode['und'][0]['value'])!= $economic_user->PostalCode)  return false;
+        if(_economic_get_value($account->economic_postalcode['und'][0]['value'])!= $economic_user->PostalCode)  return false;
     if(isset($economic_user->City))
-        if(_economic_get_value($user->economic_city['und'][0]['value'])      != $economic_user->City)        return false;
+        if(_economic_get_value($account->economic_city['und'][0]['value'])      != $economic_user->City)        return false;
     if(isset($economic_user->Country))
-        if(_economic_get_value($user->economic_country['und'][0]['value'])   != $economic_user->Country)     return false;
-    if(_economic_get_value($user->economic_balance['und'][0]['value'])       != $economic_user->Balance)     return false;
+        if(_economic_get_value($account->economic_country['und'][0]['value'])   != $economic_user->Country)     return false;
+    if(_economic_get_value($account->economic_balance['und'][0]['value'])       != $economic_user->Balance)     return false;
     return true;
 }
 
