@@ -212,6 +212,7 @@ function _economic_manage_user($user, $economic_user, $rid){
         //if does not exist
         if($user == false){
             //add to drupal
+            drupal_set_message("adding " . $economic_user->Email);
             $newuserdata['roles'] = array($rid => "e-conomic user");
             user_save(null, $newuserdata);
         }else{
