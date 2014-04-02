@@ -131,7 +131,8 @@ function _economic_load_user($id){
         debug($param);
         //drupal_set_message("load_user: " . array_shift($param));
         //debug(array_shift($param));
-        $account = user_load(array_shift($param));
+        //$account = user_load(array_shift($param));
+        $account = user_load($param[0]);
         return $account;
     }
     return false;
