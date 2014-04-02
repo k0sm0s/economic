@@ -94,8 +94,8 @@ function economic_cron(){
             $rid = array_search("e-conomic user", $roles);
 
             foreach ($debtorHandle as $d) {
-                $user = user_load($d->Number);
                 $economic_user = $economic->debtor_GetData($d);
+                $user = user_load($economic_user->Number);
                 _economic_manage_user($user, $economic_user, $rid);
 
                 //manage user invoices
@@ -106,7 +106,7 @@ function economic_cron(){
                         foreach ($entryesdata as $entry) {
                             $invoicenumber = $economic->debtorEntry_GetInvoiceNumber($entry->Handle);
                             $entry->invoiceNumber = $invoicenumber;
-                            _economic_manage_entry($entry, $d->Number);
+                            _economic_manage_entry($entry, $economic_user->Number);
                         }
                 }
             }
@@ -268,12 +268,12 @@ function _economic_create_user_data($economic_user){
     }
 
     //check if name exist
-    $result = user_load_by_name($economic_user->Email);
-    if($result) {
-        watchdog('economic', 'User with name: @name allready exist (id: @id1, @id2)',
-            array('@name' => $economic_user->Email, '@id1' => $result->uid, '@id2' => $economic_user->Number), WATCHDOG_ERROR);
-        return null;
-    }
+//    $result = user_load_by_name($economic_user->Email);
+//    if($result) {
+//        watchdog('economic', 'User with name: @name allready exist (id: @id1, @id2)',
+//            array('@name' => $economic_user->Email, '@id1' => $result->uid, '@id2' => $economic_user->Number), WATCHDOG_ERROR);
+//        return null;
+//    }
 
     $newuser = array(
         'uid'  => $economic_user->Number,
