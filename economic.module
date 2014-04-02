@@ -388,48 +388,48 @@ function economic_user_update(&$edit, $account, $category){
     }
 }
 
-///**
-// * Implements hook_user_insert().
-// * @param $edit
-// * @param $account
-// * @param $category
-// */
-//function economic_user_insert(&$edit, $account, $category){
-//    if(in_array('e-conomic user', $account->roles)){
-//        try{
-//            $agreementnumber = variable_get("economic_agreementnumber");
-//            $username = variable_get("economic_username");
-//            $password = variable_get("economic_password");
-//
-//            if($agreementnumber != "" && $username != "" && $password != ""){
-//                $economic = new Ecomonic($agreementnumber, $username, $password);
-//                $economic->connect();
-//
-//                $number = ($account->field_economic_id)?$account->field_economic_id['und'][0]['value']:$account->uid;
-//
-//                $userhandle = $economic->debtor_FindByNumber($number);
-//                $name = $edit['economic_name']['und'][0]['value'] == null?$edit['name']:$edit['economic_name']['und'][0]['value'];
-//                if(count(get_object_vars($userhandle)) == 0)
-//                {
-//                    //user does not exist in economic add him
-//                    $newuser = array(
-//                        'uid' => $number,
-//                        'name' => $name,
-//                        'mail' => $edit['mail']
-//                    );
-//
-//                    if(isset($edit['economic_address']['und'][0]['value'])) $newuser['address'] = $edit['economic_address']['und'][0]['value'];
-//                    if(isset($edit['economic_postalcode']['und'][0]['value'])) $newuser['postalcode'] = $edit['economic_postalcode']['und'][0]['value'];
-//                    if(isset($edit['economic_city']['und'][0]['value'])) $newuser['city'] = $edit['economic_city']['und'][0]['value'];
-//                    if(isset($edit['economic_country']['und'][0]['value'])) $newuser['country'] = $edit['economic_country']['und'][0]['value'];
-//
-//                    $economic->debtor_CreateFromData($newuser);
-//                }
-//                $economic->disconnect();
-//            }
-//        }
-//        catch(Exception $e){
-//            //debug($e->getMessage(), 'error');
-//        }
-//    }
-//}
+/**
+ * Implements hook_user_insert().
+ * @param $edit
+ * @param $account
+ * @param $category
+ */
+function economic_user_insert(&$edit, $account, $category){
+    if(in_array('e-conomic user', $account->roles)){
+        try{
+            $agreementnumber = variable_get("economic_agreementnumber");
+            $username = variable_get("economic_username");
+            $password = variable_get("economic_password");
+
+            if($agreementnumber != "" && $username != "" && $password != ""){
+                $economic = new Ecomonic($agreementnumber, $username, $password);
+                $economic->connect();
+
+                $number = isset($account->field_economic_id)?$account->field_economic_id['und'][0]['value']:$account->uid;
+
+                $userhandle = $economic->debtor_FindByNumber($number);
+                $name = $edit['economic_name']['und'][0]['value'] == null?$edit['name']:$edit['economic_name']['und'][0]['value'];
+                if(count(get_object_vars($userhandle)) == 0)
+                {
+                    //user does not exist in economic add him
+                    $newuser = array(
+                        'uid' => $number,
+                        'name' => $name,
+                        'mail' => $edit['mail']
+                    );
+
+                    if(isset($edit['economic_address']['und'][0]['value'])) $newuser['address'] = $edit['economic_address']['und'][0]['value'];
+                    if(isset($edit['economic_postalcode']['und'][0]['value'])) $newuser['postalcode'] = $edit['economic_postalcode']['und'][0]['value'];
+                    if(isset($edit['economic_city']['und'][0]['value'])) $newuser['city'] = $edit['economic_city']['und'][0]['value'];
+                    if(isset($edit['economic_country']['und'][0]['value'])) $newuser['country'] = $edit['economic_country']['und'][0]['value'];
+
+                    $economic->debtor_CreateFromData($newuser);
+                }
+                $economic->disconnect();
+            }
+        }
+        catch(Exception $e){
+            //debug($e->getMessage(), 'error');
+        }
+    }
+}
