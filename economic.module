@@ -96,6 +96,7 @@ function economic_cron(){
             foreach ($debtorHandle as $d) {
                 $economic_user = $economic->debtor_GetData($d);
                 $user = user_load($economic_user->Number);
+                drupal_set_message("user_load(" . $economic_user->Number . ")");
                 _economic_manage_user($user, $economic_user, $rid);
 
                 //manage user invoices
@@ -212,7 +213,6 @@ function _economic_manage_user($user, $economic_user, $rid){
         //if does not exist
         if($user == false){
             //add to drupal
-            drupal_set_message("adding " . $economic_user->Email);
             $newuserdata['roles'] = array($rid => "e-conomic user");
             user_save(null, $newuserdata);
         }else{
