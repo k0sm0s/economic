@@ -126,11 +126,10 @@ function _economic_load_user($id){
         ->fieldCondition('field_economic_id', 'value', $id, '=')
         ->execute();
 
-    debug($result);
-
     if($result){
         $param = array_keys($result['user']);
         //drupal_set_message("load_user: " . array_shift($param));
+        debug(array_shift($param));
         $account = user_load(array_shift($param));
         return $account;
     }
