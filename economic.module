@@ -132,7 +132,6 @@ function _economic_load_user($id){
         //debug(array_shift($param));
         //$account = user_load(array_shift($param));
         $account = user_load($param[0]);
-        debug($account);
         return $account;
     }
     return false;
