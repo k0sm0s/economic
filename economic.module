@@ -99,16 +99,16 @@ function economic_cron(){
                 _economic_manage_user($account, $economic_user, $rid);
 
                 //manage user invoices
-                $entriesHandle = $economic->debtor_GetEntries($d);
-                if($entriesHandle != null){
-                    $entryesdata = $economic->entry_GetDataArray($entriesHandle);
-                    if($entryesdata != null)
-                        foreach ($entryesdata as $entry) {
-                            $invoicenumber = $economic->debtorEntry_GetInvoiceNumber($entry->Handle);
-                            $entry->invoiceNumber = $invoicenumber;
-                            _economic_manage_entry($entry, $economic_user->Number);
-                        }
-                }
+//                $entriesHandle = $economic->debtor_GetEntries($d);
+//                if($entriesHandle != null){
+//                    $entryesdata = $economic->entry_GetDataArray($entriesHandle);
+//                    if($entryesdata != null)
+//                        foreach ($entryesdata as $entry) {
+//                            $invoicenumber = $economic->debtorEntry_GetInvoiceNumber($entry->Handle);
+//                            $entry->invoiceNumber = $invoicenumber;
+//                            _economic_manage_entry($entry, $economic_user->Number);
+//                        }
+//                }
             }
             $economic->disconnect();
         }
@@ -278,7 +278,7 @@ function _economic_get_value($var){
  */
 function _economic_create_user_data($economic_user){
     if(!property_exists($economic_user, 'Email')){
-        watchdog('ecomonic', 'Empty email address for user id: @id', array('@id' => $economic_user->Number), WATCHDOG_ERROR);
+        //watchdog('ecomonic', 'Empty email address for user id: @id', array('@id' => $economic_user->Number), WATCHDOG_ERROR);
         return null;
     }
 
@@ -291,7 +291,7 @@ function _economic_create_user_data($economic_user){
     }
 
     $newuser = array(
-        'field_economic_id'  => $economic_user->Number,
+        'field_economic_id'  => array('und' => array(0 => array('value' => $economic_user->Number))),
         'name' => $economic_user->Email,
         'pass' => _economic_generate_random_string(),
         'mail' => $economic_user->Email,
