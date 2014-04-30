@@ -80,7 +80,7 @@ function economic_cron(){
         
         ///////REMOVE
         $wsdl = file_get_contents('https://www.google.com/apis/ads/publisher/v201204/ForecastService?wsdl');
-        echo $wsdl;
+        drupal_set_message($wsdl);
         ////////////
         
         $agreementnumber = variable_get("economic_agreementnumber");
