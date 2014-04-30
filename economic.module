@@ -77,12 +77,6 @@ function economic_admin_settings_form($node, &$form_state){
  */
 function economic_cron(){
     try{
-        
-        ///////REMOVE
-        $wsdl = file_get_contents('https://www.google.com/apis/ads/publisher/v201204/ForecastService?wsdl');
-        drupal_set_message($wsdl);
-        ////////////
-        
         $agreementnumber = variable_get("economic_agreementnumber");
         $username = variable_get("economic_username");
         $password = variable_get("economic_password");
